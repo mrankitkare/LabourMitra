@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LabourMitra | Connecting Talent with Opportunity</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="logo">
+      <span class="labour">Labour</span><span class="mitra">Mitra</span>
+    </div>
+
+    <nav>
+      <a href="/">Home</a>
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+    </nav>
+  </header>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+      <span style="color:#FFC107;">Labour</span>
+      <span class="text-primary">Mitra</span>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto">
+
+        {% if session.get('role') == 'customer' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('customer_dashboard') }}">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('customer_bookings') }}">My Bookings</a>
+          </li>
+        {% endif %}
+
+        {% if session.get('role') == 'labour' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('labour_dashboard') }}">Requests</a>
+          </li>
+        {% endif %}
+
+        {% if session.get('role') == 'admin' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin</a>
+          </li>
+        {% endif %}
+
+        {% if session.get('user_id') %}
+          <li class="nav-item">
+            <a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+          </li>
+        {% endif %}
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  <!-- HERO SECTION -->
+  <section class="hero">
+    <div class="hero-left">
+      <p class="tagline">Trusted & Reliable</p>
+      <h1>Find the Right Skill for Your Need</h1>
+      <p class="desc">
+        LabourMitra bridges the gap between daily wage labourers and customers, making work discovery seamless and
+        reliable for everyone.
+      </p>
+
+      <div class="buttons">
+        <a href="{{ url_for('login') }}" class="btn btn-primary">Find Labour</a>
+        <a href="{{ url_for('register') }}" class="btn btn-outline">Join as Labour</a>
+      </div>
+    </div>
+
+    <div class="hero-image">
+      <img src="{{ url_for('static', filename='images/hero.png') }}" alt="LabourMitra Hero">
+    </div>
+  </section>
+
+  <!-- AVAILABLE LABOUR -->
+  <section class="cards">
+    <h2>Featured Experts</h2>
+
+    <div class="card-container">
+      <div class="card">
+        <img src="{{ url_for('static', filename='images/worker.png') }}" alt="Worker">
+        <h3>Ramesh Kumar</h3>
+        <p>Master Mason</p>
+      </div>
+
+      <div class="card">
+        <img src="{{ url_for('static', filename='images/worker.png') }}" alt="Worker">
+        <h3>Sunil Verma</h3>
+        <p>Professional Painter</p>
+      </div>
+
+      <div class="card">
+        <img src="{{ url_for('static', filename='images/worker.png') }}" alt="Worker">
+        <h3>Vijay Singh</h3>
+        <p>Expert Electrician</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-box">
+        <h3><span class="labour">Labour</span><span class="mitra">Mitra</span></h3>
+        <p>
+          Empowering the workforce by providing a transparent and efficient platform for daily wage opportunities.
+        </p>
+      </div>
+
+      <div class="footer-box">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register">Register</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-box">
+        <h4>Contact Us</h4>
+        <p>Email: support@labourmitra.com</p>
+        <p>Phone: +91 91234 56789</p>
+        <p>Indore,Madhya Pradesh, India</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      &copy; 2026 LabourMitra. Built for Impact.
+    </div>
+  </footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

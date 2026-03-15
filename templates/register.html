@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account | LabourMitra</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    .role-fields {
+      margin-top: 10px;
+    }
+
+    #categoryBox,
+    #cityBox {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="auth-container">
+    <div class="brand">
+      <span class="labour">Labour</span><span class="mitra">Mitra</span>
+    </div>
+
+    <h2 style="text-align: center; margin-bottom: 24px; color: var(--dark);">Join the Community</h2>
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/register">
+      <input type="text" name="name" placeholder="Full Name" required>
+      <input type="text" name="mobile" placeholder="Mobile Number" required>
+      <input type="password" name="password" placeholder="Password" required>
+
+      <select name="role" id="role" onchange="toggleFields()" required>
+        <option value="" disabled selected>Select Your Role</option>
+        <option value="Labour">Labour / Worker</option>
+        <option value="Customer">Customer / Client</option>
+      </select>
+
+      <div id="categoryBox" class="role-fields">
+        <select name="category">
+          <option value="">Select Primary Category</option>
+          {% for cat in CATEGORIES %}
+          <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div id="cityBox" class="role-fields">
+        <select name="city">
+          <option value="">Select Your City</option>
+          <option value="Indore">Indore</option>
+          <option value="Bhopal">Bhopal</option>
+          <option value="Betul">Betul</option>
+          <option value="Ujjain">Ujjain</option>
+          <option value="Khandwa">Khandwa</option>
+        </select>
+      </div>
+
+      <button type="submit" style="margin-top: 20px;">Create Account</button>
+    </form>
+
+    <p class="switch">
+      Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+    </p>
+  </div>
+
+  <script>
+    function toggleFields() {
+      let role = document.getElementById("role").value;
+      let categoryBox = document.getElementById("categoryBox");
+      let cityBox = document.getElementById("cityBox");
+
+      if (role === "Labour") {
+        categoryBox.style.display = "block";
+        cityBox.style.display = "block";
+      } else {
+        categoryBox.style.display = "none";
+        cityBox.style.display = "none";
+      }
+    }
+  </script>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+        <span style="color:#FFC107;">Labour</span>
+        <span class="text-primary">Mitra</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav ms-auto">
+
+          {% if session.get('role') == 'customer' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('customer_dashboard') }}">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('customer_bookings') }}">My Bookings</a>
+          </li>
+          {% endif %}
+
+          {% if session.get('role') == 'labour' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('labour_dashboard') }}">Requests</a>
+          </li>
+          {% endif %}
+
+          {% if session.get('role') == 'admin' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin</a>
+          </li>
+          {% endif %}
+
+          {% if session.get('user_id') %}
+          <li class="nav-item">
+            <a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+          </li>
+          {% endif %}
+
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

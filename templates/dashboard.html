@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard | LabourMitra</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="navbar">
+  <div class="logo">
+    <img src="{{ url_for('static', filename='images/logo.png') }}">
+    <span class="labour">Labour</span><span class="mitra">Mitra</span>
+  </div>
+
+  <nav>
+    <a href="/">Home</a>
+    <a href="/logout">Logout</a>
+  </nav>
+</header>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+      <span style="color:#FFC107;">Labour</span>
+      <span class="text-primary">Mitra</span>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto">
+
+        {% if session.get('role') == 'customer' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('customer_dashboard') }}">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('customer_bookings') }}">My Bookings</a>
+          </li>
+        {% endif %}
+
+        {% if session.get('role') == 'labour' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('labour_dashboard') }}">Requests</a>
+          </li>
+        {% endif %}
+
+        {% if session.get('role') == 'admin' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin</a>
+          </li>
+        {% endif %}
+
+        {% if session.get('user_id') %}
+          <li class="nav-item">
+            <a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+          </li>
+        {% endif %}
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+<!-- MAIN -->
+<div style="padding:40px">
+  <h2>Welcome to Dashboard</h2>
+  <p>You are successfully logged in.</p>
+
+  <h3 style="margin-top:30px">Available Labour</h3>
+
+  <div class="card-container">
+    {% for user in labours %}
+    <div class="card">
+      <img src="{{ url_for('static', filename='images/worker.png') }}">
+      <h4>{{ user[0] }}</h4>
+      <p>{{ user[1] }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
