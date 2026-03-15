@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Searching for Labour</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            width: 4rem;
+            height: 4rem;
+        }
+    </style>
+    <script>
+        const bookingId = {{ booking_id }};
+
+        function pollStatus() {
+            fetch(`/api/matching/${bookingId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'Accepted' || data.status === 'Confirmed' || data.status === 'Completed' || data.status === 'Rejected & Refunded') {
+                        window.location.href = '/customer/bookings';
+                    } else if (data.status === 'Request Sent') {
+                        document.getElementById('status_text').innerHTML = `Request sent to a nearby worker. Waiting for response... <br><br> Timeout in: <b>${data.seconds_left}s</b>`;
+                    } else if (data.status === 'Searching for Labour') {
+                        document.getElementById('status_text').innerHTML = 'Searching for nearby labour...<br><span class="text-muted small">Connecting you with available worker</span>';
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        setInterval(pollStatus, 2000);
+        window.onload = pollStatus;
+    </script>
+</head>
+
+<body>
+    <div class="card shadow p-5 text-center border-0 rounded-4" style="max-width: 400px;">
+        <div class="spinner-border text-primary mx-auto mb-4 spinner" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h4 class="fw-bold mb-3">Please Wait</h4>
+        <p id="status_text" class="text-secondary fs-5">Initiating search...</p>
+
+        <a href="/customer/bookings" class="btn btn-outline-secondary mt-4">View My Bookings</a>
+    </div>
+</body>
+
+</html>

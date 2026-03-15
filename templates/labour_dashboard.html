@@ -5,15 +5,56 @@
   <title>Labour Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    body {
+      background: linear-gradient(to right, #f8f9fa, #e9ecef);
+    }
+  </style>
+  <script>
+    function updateLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          fetch('/labour/update_location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+          }).then(res => res.json()).then(data => {
+            document.getElementById('loc_status').innerText = 'Location Sync: Active (Online) 🟢';
+          });
+        });
+      }
+    }
+
+    // Auto refresh the page every 15 seconds to check for new bookings
+    setInterval(() => {
+      window.location.reload();
+    }, 15000);
+
+    window.onload = function () {
+      updateLocation();
+    }
+  </script>
 </head>
 
-<body style="background: linear-gradient(to right, #f8f9fa, #e9ecef);">
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+        <span style="color:#FFC107;">Labour</span>
+        <span class="text-primary">Mitra</span>
+      </a>
+      <div class="ms-auto">
+        <a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a>
+      </div>
+    </div>
+  </nav>
 
   <div class="container mt-5">
 
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
       <h3>Welcome, {{ name }}</h3>
-      <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+      <span class="badge bg-success" id="loc_status">Syncing Location...</span>
     </div>
 
     <div class="row">
@@ -43,11 +84,16 @@
 
       <div class="col-md-8">
         <div class="card shadow p-4 mb-4 border-0 rounded-4">
-          <h5 class="fw-bold mb-4">Job Requests</h5>
+          <h5 class="fw-bold mb-4">Tracking Job Requests</h5>
+          <div class="alert alert-info py-2 small mb-4">
+            🔄 This page automatically refreshes every 15 seconds to check for nearby requests. You have 30 seconds to
+            accept a request.
+          </div>
 
           {% if requests %}
           {% for r in requests %}
-          <div class="card mb-3 border bg-light shadow-sm">
+          <div
+            class="card mb-3 border {% if r.booking_status == 'Request Sent' %}border-primary{% else %}bg-light{% endif %} shadow-sm">
             <div class="card-body">
 
               <div class="d-flex justify-content-between align-items-start mb-2">
@@ -67,12 +113,12 @@
               {% endif %}
 
               <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                {% if r.booking_status == "Awaiting Labour Response" %}
+                {% if r.booking_status == "Request Sent" %}
                 <div>
-                  <a href="{{ url_for('accept_booking', booking_id=r.id) }}" class="btn btn-success me-2">Accept</a>
+                  <a href="{{ url_for('accept_booking', booking_id=r.id) }}" class="btn btn-success me-2">Accept Job</a>
                   <a href="{{ url_for('reject_booking', booking_id=r.id) }}" class="btn btn-danger">Reject</a>
                 </div>
-                <span class="badge bg-info text-dark">Customer paid ₹10 request fee</span>
+                <span class="badge bg-danger text-light fs-6">Act Fast! (30s)</span>
                 {% elif r.booking_status == "Confirmed" %}
                 <div>
                   <a href="{{ url_for('complete_booking', booking_id=r.id) }}" class="btn btn-primary">Mark
@@ -91,34 +137,15 @@
           </div>
           {% endfor %}
           {% else %}
-          <div class="alert alert-secondary">
-            No job requests yet.
+          <div class="alert alert-secondary text-center">
+            <div class="spinner-grow spinner-grow-sm text-secondary me-2" role="status"></div>
+            Searching for nearby work...
           </div>
           {% endif %}
         </div>
       </div>
     </div>
   </div>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
-        <span style="color:#FFC107;">Labour</span>
-        <span class="text-primary">Mitra</span>
-      </a>
-
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="nav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
