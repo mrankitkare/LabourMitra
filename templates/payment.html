@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment | LabourMitra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #673ab7;
+            --secondary-color: #ffc107;
+            --bg-light: #f4f7fe;
+            --text-dark: #1a202c;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-dark);
+        }
+
+        .payment-container {
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 0 15px;
+        }
+
+        .card-checkout {
+            background: white;
+            border-radius: 24px;
+            border: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .checkout-header {
+            background: var(--primary-color);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .checkout-header h4 {
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .bill-details {
+            padding: 30px;
+        }
+
+        .bill-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .bill-item.total {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px dashed #edf2f7;
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--primary-color);
+        }
+
+        .breakdown-box {
+            background: #f8f9ff;
+            border-radius: 16px;
+            padding: 15px;
+            margin-top: 25px;
+            border: 1px solid #eef2ff;
+        }
+
+        .breakdown-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #718096;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #4a5568;
+        }
+
+        .btn-pay {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 18px;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-pay:hover {
+            background: #512da8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(103, 58, 183, 0.3);
+            color: white;
+        }
+
+        .secure-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #718096;
+            font-size: 13px;
+            margin-top: 20px;
+        }
+
+        .service-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .service-icon {
+            width: 50px;
+            height: 50px;
+            background: #f3f0ff;
+            color: var(--primary-color);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .service-text h6 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .service-text p {
+            margin: 0;
+            font-size: 13px;
+            color: #718096;
+        }
+
+        @media (max-width: 576px) {
+            .payment-container {
+                margin: 20px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="payment-container">
+        <div class="card-checkout">
+            <div class="checkout-header">
+                <h4>Payment Summary</h4>
+            </div>
+
+            <div class="bill-details">
+                <div class="service-info">
+                    <div class="service-icon">
+                        <i class="bi bi-tools"></i>
+                    </div>
+                    <div class="service-text">
+                        <h6>{{ booking.category }}</h6>
+                        <p>Booking ID: #{{ booking.id }} | {{ booking.booking_date }}</p>
+                    </div>
+                </div>
+
+                <div class="bill-item">
+                    <span class="text-secondary">Visiting Charge (Paid)</span>
+                    <span class="text-success">- ₹{{ "%.2f"|format(vc) }}</span>
+                </div>
+                
+                <div class="bill-item">
+                    <span class="text-secondary">Work Charge</span>
+                    <span class="fw-bold">₹{{ "%.2f"|format(wc) }}</span>
+                </div>
+
+                <div class="bill-item total">
+                    <span>Amount Due</span>
+                    <span>₹{{ "%.2f"|format(wc) }}</span>
+                </div>
+
+                <div class="breakdown-box">
+                    <span class="breakdown-title">Transaction Breakdown</span>
+                    <div class="breakdown-item">
+                        <span>Platform Fee (15%)</span>
+                        <span>₹{{ "%.2f"|format(plat_fee) }}</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Labour Earnings (85%)</span>
+                        <span>₹{{ "%.2f"|format(labour_earnings) }}</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 rounded-4 border {% if wallet_balance >= wc %}bg-light{% else %}bg-danger bg-opacity-10 border-danger{% endif %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted d-block">Your Wallet Balance</small>
+                            <span class="fw-bold {% if wallet_balance < wc %}text-danger{% endif %}">₹{{ "%.2f"|format(wallet_balance) }}</span>
+                        </div>
+                        {% if wallet_balance < wc %}
+                        <a href="{{ url_for('wallet_history') }}" class="btn btn-sm btn-danger rounded-pill px-3">Add Money</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <form action="{{ url_for('pay_final_work', booking_id=booking.id) }}" method="GET">
+                    {% if wallet_balance >= wc %}
+                    <button type="submit" class="btn btn-pay">
+                        Confirm & Pay ₹{{ "%.2f"|format(wc) }}
+                    </button>
+                    {% else %}
+                    <button type="button" class="btn btn-pay opacity-50" disabled>
+                        Insufficient Balance
+                    </button>
+                    {% endif %}
+                </form>
+
+                <div class="secure-badge">
+                    <i class="bi bi-shield-lock-fill"></i>
+                    <span>Secure 256-bit SSL Encrypted Payment</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{ url_for('customer_bookings') }}" class="text-decoration-none text-secondary small">
+                <i class="bi bi-arrow-left me-1"></i> Back to My Bookings
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

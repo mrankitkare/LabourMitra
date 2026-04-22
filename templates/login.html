@@ -23,66 +23,111 @@
     <div class="error-msg">{{ error }}</div>
     {% endif %}
 
-    <form action="{{ url_for('login') }}" method="POST">
+    <form action="{{ url_for('login') }}" method="POST" id="loginForm">
       <input type="text" name="mobile" placeholder="Mobile Number" required>
-      <input type="password" name="password" placeholder="Password" required>
-      <button type="submit">Login to Account</button>
+
+      <div id="passwordField">
+        <input type="password" name="password" placeholder="Password" id="passwordInput">
+      </div>
+
+      <input type="hidden" name="login_type" id="loginType" value="password">
+
+      <div class="d-flex mb-3 gap-2 mt-2">
+        <button type="button" class="btn btn-outline-primary btn-sm flex-fill" id="btnOtp"
+          onclick="setLoginType('otp')">Login with OTP</button>
+        <button type="button" class="btn btn-primary btn-sm flex-fill" id="btnPassword"
+          onclick="setLoginType('password')">Login with Password</button>
+      </div>
+
+      <button type="submit" class="mt-2" id="submitBtn">Login to Account</button>
+
+      <div class="text-end mt-2">
+        <a href="{{ url_for('forgot_password') }}" class="small text-muted text-decoration-none">Forgot Password?</a>
+      </div>
     </form>
 
-    <p class="switch">
+    <p class="switch mt-4">
       Don’t have an account? <a href="{{ url_for('register') }}">Register here</a>
     </p>
   </div>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
-      <span style="color:#FFC107;">Labour</span>
-      <span class="text-primary">Mitra</span>
-    </a>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+  <script>
+    function setLoginType(type) {
+      document.getElementById('loginType').value = type;
+      let passField = document.getElementById('passwordField');
+      let passInput = document.getElementById('passwordInput');
+      let btnOtp = document.getElementById('btnOtp');
+      let btnPass = document.getElementById('btnPassword');
+      let submitBtn = document.getElementById('submitBtn');
 
-    <div class="collapse navbar-collapse" id="nav">
-      <ul class="navbar-nav ms-auto">
+      if (type === 'otp') {
+        passField.style.display = 'none';
+        passInput.removeAttribute('required');
+        btnOtp.className = 'btn btn-primary btn-sm flex-fill';
+        btnPass.className = 'btn btn-outline-primary btn-sm flex-fill';
+        submitBtn.innerText = 'Send OTP';
+      } else {
+        passField.style.display = 'block';
+        passInput.setAttribute('required', 'required');
+        btnPass.className = 'btn btn-primary btn-sm flex-fill';
+        btnOtp.className = 'btn btn-outline-primary btn-sm flex-fill';
+        submitBtn.innerText = 'Login to Account';
+      }
+    }
 
-        {% if session.get('role') == 'customer' %}
+    // Default to password on load
+    setLoginType('password');
+  </script>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+        <span style="color:#FFC107;">Labour</span>
+        <span class="text-primary">Mitra</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav ms-auto">
+
+          {% if session.get('role') == 'customer' %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('customer_dashboard') }}">Dashboard</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('customer_bookings') }}">My Bookings</a>
           </li>
-        {% endif %}
+          {% endif %}
 
-        {% if session.get('role') == 'labour' %}
+          {% if session.get('role') == 'labour' %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('labour_dashboard') }}">Requests</a>
           </li>
-        {% endif %}
+          {% endif %}
 
-        {% if session.get('role') == 'admin' %}
+          {% if session.get('role') == 'admin' %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin</a>
           </li>
-        {% endif %}
+          {% endif %}
 
-        {% if session.get('user_id') %}
+          {% if session.get('user_id') %}
           <li class="nav-item">
             <a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a>
           </li>
-        {% else %}
+          {% else %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('login') }}">Login</a>
           </li>
-        {% endif %}
+          {% endif %}
 
-      </ul>
+        </ul>
+      </div>
     </div>
-  </div>
-</nav>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </nav>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 

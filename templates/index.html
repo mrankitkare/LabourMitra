@@ -25,54 +25,54 @@
     </nav>
   </header>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
-      <span style="color:#FFC107;">Labour</span>
-      <span class="text-primary">Mitra</span>
-    </a>
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+        <span style="color:#FFC107;">Labour</span>
+        <span class="text-primary">Mitra</span>
+      </a>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-    <div class="collapse navbar-collapse" id="nav">
-      <ul class="navbar-nav ms-auto">
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav ms-auto">
 
-        {% if session.get('role') == 'customer' %}
+          {% if session.get('role') == 'customer' %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('customer_dashboard') }}">Dashboard</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('customer_bookings') }}">My Bookings</a>
           </li>
-        {% endif %}
+          {% endif %}
 
-        {% if session.get('role') == 'labour' %}
+          {% if session.get('role') == 'labour' %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('labour_dashboard') }}">Requests</a>
           </li>
-        {% endif %}
+          {% endif %}
 
-        {% if session.get('role') == 'admin' %}
+          {% if session.get('role') == 'admin' %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin</a>
           </li>
-        {% endif %}
+          {% endif %}
 
-        {% if session.get('user_id') %}
+          {% if session.get('user_id') %}
           <li class="nav-item">
             <a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a>
           </li>
-        {% else %}
+          {% else %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('login') }}">Login</a>
           </li>
-        {% endif %}
+          {% endif %}
 
-      </ul>
+        </ul>
+      </div>
     </div>
-  </div>
-</nav>
+  </nav>
 
   <!-- HERO SECTION -->
   <section class="hero">
@@ -120,6 +120,33 @@
     </div>
   </section>
 
+  <!-- WORK IN ACTION SECTION -->
+  <section class="work-in-action">
+    <h2>Our Skilled Workers in Action</h2>
+
+    <div class="action-grid">
+      <div class="action-card">
+        <img src="{{ url_for('static', filename='images/electrician_featured.png') }}" alt="Electrician at Work">
+        <div class="action-caption">Electrician at Work</div>
+      </div>
+
+      <div class="action-card">
+        <img src="{{ url_for('static', filename='images/painter_featured.png') }}" alt="Professional Wall Painting">
+        <div class="action-caption">Professional Wall Painting</div>
+      </div>
+
+      <div class="action-card">
+        <img src="{{ url_for('static', filename='images/mason_featured.png') }}" alt="Masonry Construction Work">
+        <div class="action-caption">Masonry Construction Work</div>
+      </div>
+
+      <div class="action-card">
+        <img src="{{ url_for('static', filename='images/labour_featured.png') }}" alt="Construction Material Transport">
+        <div class="action-caption">Construction Material Transport</div>
+      </div>
+    </div>
+  </section>
+
   <!-- FOOTER -->
   <footer class="footer">
     <div class="footer-container">
@@ -151,7 +178,7 @@
       &copy; 2026 LabourMitra. Built for Impact.
     </div>
   </footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

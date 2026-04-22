@@ -5,10 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Bookings | LabourMitra</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
     <style>
         body {
             background: linear-gradient(to right, #f8f9fa, #e9ecef);
@@ -21,14 +19,6 @@
             border: 1px solid #e2e8f0;
             margin-bottom: 20px;
         }
-
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
     </style>
 </head>
 
@@ -37,100 +27,177 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow mb-4">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
-                <span style="color:#FFC107;">Labour</span>
-                <span class="text-primary">Mitra</span>
+                <span style="color:#FFC107;">Labour</span><span class="text-primary">Mitra</span>
             </a>
             <div class="ms-auto">
-                <a class="nav-link text-white" href="{{ url_for('customer_dashboard') }}">Dashboard</a>
+                <a class="nav-link text-white d-inline-block me-3"
+                    href="{{ url_for('customer_dashboard') }}">Dashboard</a>
+                <a class="nav-link text-danger d-inline-block" href="{{ url_for('logout') }}">Logout</a>
             </div>
         </div>
     </nav>
 
     <div class="container" style="max-width: 800px;">
-
-        <h2 class="mb-4">My Bookings</h2>
+        <h2 class="mb-4">My Bookings Flow</h2>
 
         {% if bookings %}
         {% for b in bookings %}
-
         <div class="booking-card shadow-sm">
-
             <div class="d-flex justify-content-between mb-3">
                 <div>
                     <h5>{{ b.name }}</h5>
                     <p class="mb-1"><strong>Category:</strong> {{ b.category }}</p>
-                    {% if b.category == "Electrician" %}
+
+                    {% if b.category == "Electrician" and b.service_type %}
                     <p class="mb-1"><strong>Issue:</strong> {{ b.service_type }}</p>
                     {% endif %}
-                    <p class="mb-1 text-muted small">
-                        📍 {{ b.city }} | 📅 {{ b.booking_date }}
-                    </p>
+
+                    {% if b.booking_type == "full_day" %}
+                    <p class="mb-1"><span class="badge bg-secondary">Full Day Booking (₹{{ b.applied_rate }})</span></p>
+                    {% elif b.booking_type == "hourly" %}
+                    <p class="mb-1"><span class="badge bg-secondary">Hourly Booking ({{ b.selected_hours }} hours x ₹{{
+                            b.applied_rate }}/hr)</span></p>
+                    {% endif %}
+
+                    <p class="mb-1 text-muted small">📍 {{ b.city }} | 📅 {{ b.booking_date }}</p>
                 </div>
                 <div>
                     <span class="badge bg-secondary mb-2">{{ b.booking_status }}</span>
                 </div>
             </div>
 
-            <!-- 🔒 PLATFORM CHARGE PAYMENT -->
-            {% if b.booking_status == "Pending Platform Charge" %}
-            <div class="alert alert-primary d-flex justify-content-between align-items-center">
+            <!-- 1. PLATFORM CHARGE PAYMENT -->
+            {% if b.booking_status == "Pending Payment" %}
+            <div class="alert alert-primary d-flex justify-content-between align-items-center mb-0">
                 <span>Pay ₹10 Platform Charge to send request</span>
-                <a href="{{ url_for('pay_platform_charge', booking_id=b.id) }}" class="btn btn-sm btn-primary">
-                    Pay ₹10 Now
-                </a>
+                <a href="{{ url_for('pay_platform_charge', booking_id=b.id) }}" class="btn btn-sm btn-primary">Pay ₹10
+                    Now</a>
             </div>
             {% endif %}
 
-            <!-- 🔒 CONTACT UNLOCK -->
-            {% if b.booking_status in ["Confirmed", "Completed"] %}
-            <div class="alert alert-success">
-                📞 <a href="#" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm"><i
-                        class="bi bi-telephone-fill me-2"></i>Call via Labour Mitra</a>
-                <br><br><small><strong>{{ b.caller_info }}</strong></small>
-            </div>
-            <div class="alert alert-warning text-dark">
-                <strong>Visiting Charge:</strong> ₹{{ b.visiting_charge|int }}<br>
-                <small>Please pay this amount directly to the labour upon their arrival for inspection. Final work cost
-                    will be discussed after inspection.</small>
-            </div>
-            {% elif b.booking_status == "Awaiting Labour Response" %}
-            <div class="alert alert-info">
-                ⌛ Platform fee paid. Waiting for labour to accept.
-            </div>
-            {% elif b.booking_status == "Rejected & Refunded" %}
-            <div class="alert alert-danger">
-                ❌ This request was rejected. ₹10 Platform Charge has been refunded to your account.
+            <!-- 2. SEARCHING / REQUEST SENT -->
+            {% if b.booking_status in ["Searching for Labour", "Request Sent"] %}
+            <div class="alert alert-info mb-0">
+                <div class="spinner-border spinner-border-sm text-info me-2" role="status"></div>
+                Searching for nearby worker & waiting for response...
             </div>
             {% endif %}
 
-            <!-- ⭐ REVIEW -->
-            {% if b.booking_status == "Completed" %}
-            <form action="{{ url_for('add_review', booking_id=b.id) }}" method="POST" class="mt-3">
-                <select name="rating" class="form-select mb-2">
-                    <option value="5">⭐⭐⭐⭐⭐ (5)</option>
-                    <option value="4">⭐⭐⭐⭐ (4)</option>
-                    <option value="3">⭐⭐⭐ (3)</option>
-                    <option value="2">⭐⭐ (2)</option>
-                    <option value="1">⭐ (1)</option>
-                </select>
-                <textarea name="comment" class="form-control mb-2" placeholder="Write your review"></textarea>
-                <button class="btn btn-primary btn-sm">
-                    Submit Review
-                </button>
-            </form>
+            <!-- 3. ACCEPTED -> PAY VISITING CHARGE OR DISPATCH directly -->
+            {% if b.booking_status == "Accepted" %}
+            <div class="alert alert-warning mb-0">
+                <div class="mb-2"><strong>Worker Found!</strong>
+                    {% if b.visiting_charge and b.visiting_charge > 0 %}
+                    Please pay the visiting charge to dispatch the worker to your location.
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Visiting Charge: ₹{{ b.visiting_charge|int }}</span>
+                    <a href="{{ url_for('pay_visiting_charge', booking_id=b.id) }}"
+                        class="btn btn-sm btn-warning fw-bold">Pay ₹{{ b.visiting_charge|int }} Now</a>
+                </div>
+                {% else %}
+                Worker is ready. Click below to dispatch worker to your location.
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span>No Visiting Charge for this Service.</span>
+                <a href="{{ url_for('pay_visiting_charge', booking_id=b.id) }}"
+                    class="btn btn-sm btn-success fw-bold">Dispatch Worker Now</a>
+            </div>
             {% endif %}
-
-        </div>
-
-        {% endfor %}
-        {% else %}
-        <div class="alert alert-info">
-            No bookings yet.
         </div>
         {% endif %}
 
-    </div>
+        <!-- 4. INSPECTION STARTED -->
+        {% if b.booking_status == "Inspection Started" %}
+        <div class="alert alert-info mb-0">
+            ⭐ <strong>Worker is inspecting your issue or arriving.</strong> Please wait while they enter the confirmed
+            work cost inside their app.
+        </div>
+        {% endif %}
 
+        <!-- 5. ESTIMATE SENT -> APPROVE / REJECT -->
+        {% if b.booking_status == "Estimate Sent" %}
+        <div class="alert alert-warning mb-0">
+            <h6 class="fw-bold mb-2">Estimate Received</h6>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark fs-5">Estimated Cost: ₹{{ b.estimate_amount }}</span>
+                <div>
+                    <a href="{{ url_for('approve_estimate', booking_id=b.id, action='accept') }}"
+                        class="btn btn-sm btn-success me-1">Accept Work</a>
+                    <a href="{{ url_for('approve_estimate', booking_id=b.id, action='reject') }}"
+                        class="btn btn-sm btn-danger">Reject</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- WORK APPROVED -> Waiting for labour to start -->
+        {% if b.booking_status == "Work Approved" %}
+        <div class="alert alert-primary mb-0">
+            <strong>Work Approved!</strong> The worker will start the job soon.
+        </div>
+        {% endif %}
+
+        <!-- 6. WORK IN PROGRESS -> PAY FINAL -->
+        {% if b.booking_status == "Work In Progress" %}
+        <div class="alert alert-primary mb-0">
+            <div class="mb-2">⭐ Job is in progress. Pay the final amount to mark it completed.</div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold fs-5 text-dark">Final Cost: ₹{{ b.estimate_amount }}</span>
+                <a href="{{ url_for('checkout', booking_id=b.id) }}" class="btn btn-primary fw-bold">Proceed to Payment</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- REJECTED BY CUSTOMER -->
+        {% if b.booking_status == "Rejected by Customer" %}
+        <div class="alert alert-danger mb-0">
+            ❌ You rejected the work estimate. The job has been cancelled.
+        </div>
+        {% endif %}
+
+        <!-- CONTACT VISIBLE AFTER ACCEPTED -->
+        {% if b.booking_status in ["Accepted", "Inspection Started", "Estimate Sent", "Work Approved", "Work In
+        Progress", "Completed"] %}
+        <div class="mt-3 p-3 bg-light rounded shadow-sm border text-center">
+            📞 <a href="#" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm disabled"><i
+                    class="bi bi-telephone-fill me-2"></i>Call via Labour Mitra</a>
+            <br><br><small><strong>{{ b.caller_info }}</strong> (Privacy preserved)</small>
+        </div>
+        {% endif %}
+
+        <!-- ⭐ REVIEW -->
+        {% if b.booking_status == "Completed" %}
+        <div class="alert alert-success mt-3 mb-0">
+            ✅ Paid ₹{{ b.final_work_cost }}. Work successfully completed!
+        </div>
+
+        {% if not b.rating %}
+        <form action="{{ url_for('add_review', booking_id=b.id) }}" method="POST"
+            class="mt-3 px-3 py-3 border rounded bg-white shadow-sm">
+            <h6 class="fw-bold mb-2">Leave a Review</h6>
+            <select name="rating" class="form-select mb-2">
+                <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                <option value="4">⭐⭐⭐⭐ (4)</option>
+                <option value="3">⭐⭐⭐ (3)</option>
+                <option value="2">⭐⭐ (2)</option>
+                <option value="1">⭐ (1)</option>
+            </select>
+            <textarea name="comment" class="form-control mb-2" placeholder="Write your review" required></textarea>
+            <button class="btn btn-primary w-100 fw-bold">Submit Review</button>
+        </form>
+        {% else %}
+        <div class="mt-2 text-muted fw-bold small text-center">Review Submitted.</div>
+        {% endif %}
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="alert alert-info border-0 rounded-4 shadow-sm text-center py-5">
+        You haven't made any bookings yet!
+    </div>
+    {% endif %}
+    </div>
 </body>
 
 </html>

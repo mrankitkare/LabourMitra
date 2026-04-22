@@ -6,7 +6,6 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-  <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
@@ -24,22 +23,30 @@
   <script>
     let map, userMarker, markersLayer;
 
+    // Prices mapping from backend
+    const VISITING_CATS = [
+      "Electrician",
+      "Plumber",
+      "AC Repair / Installation",
+      "Appliance Repair (Washing Machine / Fridge)"
+    ];
+    const HOURLY_PRICING = {
+      "Painter": { full_day: 850, hourly: 150 },
+      "Mason (Raj Mistri)": { full_day: 1200, hourly: 200 },
+      "Helper / General Labour": { full_day: 600, hourly: 120 }
+    };
+
     function initMap() {
-      map = L.map('map').setView([22.7196, 75.8577], 13); // Default Indore
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
+      map = L.map('map').setView([22.7196, 75.8577], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
       markersLayer = L.layerGroup().addTo(map);
 
-      // Auto capture location
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-
           document.getElementById('lat').value = lat;
           document.getElementById('lng').value = lng;
-
           map.setView([lat, lng], 14);
           userMarker = L.marker([lat, lng], {
             icon: L.icon({
@@ -48,10 +55,7 @@
               iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
             })
           }).addTo(map).bindPopup("Your Location").openPopup();
-
           loadNearbyLabours();
-        }, () => {
-          alert('Location access denied. Bookings require location.');
         });
       }
     }
@@ -60,69 +64,186 @@
       const cat = document.getElementById('categorySelect').value;
       const lat = document.getElementById('lat').value;
       const lng = document.getElementById('lng').value;
-
       if (!lat || !lng) return;
-
       fetch(`/api/nearby_labours?lat=${lat}&lng=${lng}&category=${encodeURIComponent(cat)}`)
         .then(res => res.json())
         .then(data => {
           markersLayer.clearLayers();
           data.forEach(labour => {
             if (labour.latitude && labour.longitude) {
-              L.marker([labour.latitude, labour.longitude])
-                .bindPopup(`<b>${labour.name}</b><br>${labour.category} ⭐${labour.average_rating}`)
+              const iconColor = labour.available ? 'green' : 'grey';
+              const statusBadge = labour.available ? '<span class="badge bg-success">Available</span>' : '<span class="badge bg-danger">Busy</span>';
+              
+              L.marker([labour.latitude, labour.longitude], {
+                icon: L.icon({
+                  iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${iconColor}.png`,
+                  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+                })
+              })
+                .bindPopup(`
+                  <div class="text-center">
+                    <b>${labour.name} <i class="bi bi-patch-check-fill text-primary" title="Verified"></i></b> ${statusBadge}<br>
+                    <span class="text-secondary">${labour.category}</span><br>
+                    <span class="badge bg-warning text-dark mt-1">⭐ ${parseFloat(labour.average_rating || 0).toFixed(1)} (${labour.total_reviews || 0} Reviews)</span><br>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="showReviews(${labour.id}, '${labour.name}')">View Reviews</button>
+                  </div>
+                `)
                 .addTo(markersLayer);
             }
           });
         });
     }
 
-    function toggleElectricianServices() {
+    function toggleOptions() {
       const cat = document.getElementById("categorySelect").value;
-      const div = document.getElementById("electrician_opts");
-      const sel = document.getElementById("service_type");
+      const elecDiv = document.getElementById("electrician_opts");
+      const elecSel = document.getElementById("service_type");
+      const hourlyDiv = document.getElementById("hourly_opts");
+      const bTypeSel = document.getElementById("booking_type");
+      const bHoursInp = document.getElementById("selected_hours");
+      const pricingInfo = document.getElementById("pricing_info");
+
+      elecDiv.style.display = "none";
+      elecSel.removeAttribute("required");
+      hourlyDiv.style.display = "none";
+      bTypeSel.removeAttribute("required");
+      bHoursInp.removeAttribute("required");
+      pricingInfo.innerHTML = "";
+
       if (cat === "Electrician") {
-        div.style.display = "block";
-        sel.setAttribute("required", "required");
+        elecDiv.style.display = "block";
+        elecSel.setAttribute("required", "required");
+      }
+
+      if (VISITING_CATS.includes(cat)) {
+        pricingInfo.innerHTML = `
+                <span class="badge bg-secondary mb-2 fs-6">Visiting Charge: ₹129</span><br>
+                <small class="text-muted">Final work price will be decided after inspection by the worker.</small>
+            `;
+      } else if (HOURLY_PRICING[cat]) {
+        hourlyDiv.style.display = "block";
+        bTypeSel.setAttribute("required", "required");
+        updateHourlyPrice();
       } else {
-        div.style.display = "none";
-        sel.removeAttribute("required");
+        pricingInfo.innerHTML = `<small class="text-muted">Select a category to view pricing</small>`;
       }
       loadNearbyLabours();
+    }
+
+    function updateHourlyPrice() {
+      const cat = document.getElementById("categorySelect").value;
+      const bType = document.getElementById("booking_type").value;
+      const bHoursDiv = document.getElementById("booking_hours_div");
+      const bHoursInp = document.getElementById("selected_hours");
+      const pricingInfo = document.getElementById("pricing_info");
+
+      if (!HOURLY_PRICING[cat]) return;
+
+      if (bType === "hourly") {
+        bHoursDiv.style.display = "block";
+        bHoursInp.setAttribute("required", "required");
+        let hrs = bHoursInp.value || 1;
+        let price = hrs * HOURLY_PRICING[cat].hourly;
+        pricingInfo.innerHTML = `
+                <span class="badge bg-secondary mb-2 fs-6">Hourly Rate: ₹${HOURLY_PRICING[cat].hourly}/hr</span><br>
+                <div class="alert alert-info py-2 m-0 text-center"><small>Final Estimated Cost: <strong>₹${price}</strong></small></div>
+            `;
+      } else if (bType === "full_day") {
+        bHoursDiv.style.display = "none";
+        bHoursInp.removeAttribute("required");
+        pricingInfo.innerHTML = `
+                <span class="badge bg-secondary mb-2 fs-6">Full Day Rate: ₹${HOURLY_PRICING[cat].full_day}</span><br>
+                <small class="text-muted">Fixed full-day pricing.</small>
+            `;
+      } else {
+        bHoursDiv.style.display = "none";
+        bHoursInp.removeAttribute("required");
+        pricingInfo.innerHTML = `
+                <small class="text-muted">Select booking duration type to see price.</small>
+            `;
+      }
+    }
+    function showReviews(labourId, name) {
+      document.getElementById("reviewModalLabel").innerText = name + " - Reviews";
+      const content = document.getElementById("reviewModalContent");
+      content.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div></div>';
+
+      let modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+      modal.show();
+
+      fetch(`/api/labour_reviews/${labourId}`)
+        .then(res => res.json())
+        .then(reviews => {
+          if (reviews.length === 0) {
+            content.innerHTML = '<div class="alert alert-info">No reviews yet.</div>';
+            return;
+          }
+          let html = '';
+          reviews.forEach(r => {
+            let stars = '⭐'.repeat(r.rating);
+            html += `
+                    <div class="mb-3 border-bottom pb-2">
+                        <div class="d-flex justify-content-between">
+                            <strong>${r.customer_name}</strong>
+                            <small class="text-muted">${r.date}</small>
+                        </div>
+                        <div class="text-warning">${stars}</div>
+                        <p class="mb-0 mt-1 small">${r.comment || ''}</p>
+                    </div>
+                  `;
+          });
+          content.innerHTML = html;
+        });
     }
   </script>
 </head>
 
 <body onload="initMap()">
 
+  <!-- Reviews Modal -->
+  <div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold" id="reviewModalLabel">Labour Reviews</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="reviewModalContent">
+          Loading...
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
-        <span style="color:#FFC107;">Labour</span>
-        <span class="text-primary">Mitra</span>
-      </a>
-
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
+      <a class="navbar-brand fw-bold" href="{{ url_for('home') }}"><span style="color:#FFC107;">Labour</span><span
+          class="text-primary">Mitra</span></a>
       <div class="collapse navbar-collapse" id="nav">
         <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('customer_dashboard') }}">Dashboard</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('customer_bookings') }}">My Bookings</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a>
-          </li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('customer_dashboard') }}">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('customer_bookings') }}">My Bookings</a></li>
+          <li class="nav-item"><a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a></li>
         </ul>
       </div>
     </div>
   </nav>
 
   <div class="container mt-5">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
 
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h3>Book Nearby Labour</h3>
@@ -133,25 +254,34 @@
       <div class="col-md-7 mb-4">
         <div class="card shadow border-0 p-2">
           <div id="map"></div>
-          <div class="text-center mt-2 small text-muted">
-            <span style="color:red">📍 Red</span>: Your Location | <span>📍 Blue</span>: Available Labours
-          </div>
+          <div class="text-center mt-2 small text-muted"><span style="color:red">📍 Red</span>: Your Location | <span>📍
+              Blue</span>: Available Labours</div>
         </div>
       </div>
 
       <div class="col-md-5">
+        <div class="card shadow p-4 mb-4 border-0 rounded-4 text-white" style="background: linear-gradient(135deg, #673ab7, #512da8);">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="mb-0 small text-white-50 text-uppercase letter-spacing-1">Wallet Balance</p>
+              <h2 class="fw-bold mb-0">₹{{ "%.2f"|format(wallet_balance) }}</h2>
+            </div>
+            <a href="{{ url_for('wallet_history') }}" class="btn btn-light btn-sm fw-bold rounded-pill px-3 shadow-sm">
+              <i class="bi bi-wallet2 me-1"></i> Manage
+            </a>
+          </div>
+        </div>
+
         <div class="card shadow p-4 mb-4 border-0 rounded-4">
           <h5 class="fw-bold mb-3">Service Details</h5>
 
-          <form action="{{ url_for('send_request') }}" method="POST">
-
+          <form action="{{ url_for('prepare_booking') }}" method="POST">
             <input type="hidden" name="customer_latitude" id="lat" required>
             <input type="hidden" name="customer_longitude" id="lng" required>
 
             <div class="mb-3">
               <label class="form-label small text-secondary">Service Category</label>
-              <select name="category" id="categorySelect" class="form-select" onchange="toggleElectricianServices()"
-                required>
+              <select name="category" id="categorySelect" class="form-select" onchange="toggleOptions()" required>
                 <option value="">Select Category</option>
                 {% for cat in CATEGORIES %}
                 <option value="{{ cat }}">{{ cat }}</option>
@@ -169,14 +299,27 @@
               </select>
             </div>
 
+            <div class="mb-3" id="hourly_opts" style="display:none;">
+              <label class="form-label small text-secondary">Booking Duration</label>
+              <select name="booking_type" id="booking_type" class="form-select" onchange="updateHourlyPrice()">
+                <option value="">Select Duration</option>
+                <option value="full_day">Full Day Work</option>
+                <option value="hourly">Hourly Work</option>
+              </select>
+              <div id="booking_hours_div" class="mt-2" style="display:none;">
+                <label class="form-label small text-secondary">Number of Hours</label>
+                <input type="number" name="selected_hours" id="selected_hours" class="form-control" min="1" max="12"
+                  value="1" onchange="updateHourlyPrice()" onkeyup="updateHourlyPrice()">
+              </div>
+            </div>
+
             <div class="mb-3">
               <label class="form-label small text-secondary">Service Date</label>
               <input type="date" name="booking_date" class="form-control" required>
             </div>
 
-            <div class="pricing-section bg-light p-3 rounded-3 my-4 border text-center">
-              <span class="badge bg-secondary mb-2">Visiting Charge ₹{{ VISITING_CHARGE|int }}</span><br>
-              <small class="text-muted">Final work cost will be discussed with the assigned worker.</small>
+            <div class="pricing-section bg-light p-3 rounded-3 my-4 border text-center" id="pricing_info">
+              <small class="text-muted">Select a category to view pricing.</small>
             </div>
 
             <div class="alert alert-info py-2 mb-3 mt-2 text-center" style="font-size: 0.85rem;">
@@ -184,13 +327,12 @@
             </div>
 
             <button class="btn btn-primary w-100 rounded-pill py-3 shadow-sm fw-bold" style="font-size:1.1rem">
-              Pay ₹10 & Find Labour
+              Pay ₹10 & Book Now
             </button>
           </form>
         </div>
       </div>
     </div>
-
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

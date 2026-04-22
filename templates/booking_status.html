@@ -27,10 +27,19 @@
                 .then(data => {
                     if (data.status === 'Accepted' || data.status === 'Confirmed' || data.status === 'Completed' || data.status === 'Rejected & Refunded') {
                         window.location.href = '/customer/bookings';
-                    } else if (data.status === 'Request Sent') {
-                        document.getElementById('status_text').innerHTML = `Request sent to a nearby worker. Waiting for response... <br><br> Timeout in: <b>${data.seconds_left}s</b>`;
-                    } else if (data.status === 'Searching for Labour') {
-                        document.getElementById('status_text').innerHTML = 'Searching for nearby labour...<br><span class="text-muted small">Connecting you with available worker</span>';
+                    } else if (data.status === 'Pending Payment') {
+                        document.getElementById('spinner_div').style.display = 'none';
+                        document.getElementById('payment_div').style.display = 'block';
+                        document.getElementById('status_text').innerHTML = 'Please pay the platform request fee to start searching.';
+                    } else {
+                        document.getElementById('spinner_div').style.display = 'block';
+                        document.getElementById('payment_div').style.display = 'none';
+                        
+                        if (data.status === 'Request Sent') {
+                            document.getElementById('status_text').innerHTML = `Request sent to a nearby worker. Waiting for response... <br><br> Timeout in: <b>${data.seconds_left}s</b>`;
+                        } else if (data.status === 'Searching for Labour') {
+                            document.getElementById('status_text').innerHTML = 'Searching for nearby labour...<br><span class="text-muted small">Connecting you with available worker</span>';
+                        }
                     }
                 })
                 .catch(err => console.error(err));
@@ -42,14 +51,34 @@
 </head>
 
 <body>
-    <div class="card shadow p-5 text-center border-0 rounded-4" style="max-width: 400px;">
-        <div class="spinner-border text-primary mx-auto mb-4 spinner" role="status">
-            <span class="visually-hidden">Loading...</span>
+    <div class="card shadow p-5 text-center border-0 rounded-4" style="max-width: 450px;">
+        <div id="spinner_div">
+            <div class="spinner-border text-primary mx-auto mb-4 spinner" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
         </div>
-        <h4 class="fw-bold mb-3">Please Wait</h4>
+
+        <div id="payment_div" style="display: none;">
+            <div class="mb-4 text-primary">
+                <i class="bi bi-wallet2" style="font-size: 3rem;"></i>
+            </div>
+            <h4 class="fw-bold">Payment Required</h4>
+        </div>
+
         <p id="status_text" class="text-secondary fs-5">Initiating search...</p>
 
-        <a href="/customer/bookings" class="btn btn-outline-secondary mt-4">View My Bookings</a>
+        <div id="payment_actions" class="mt-4">
+            <div id="payment_btn_div">
+                <a href="{{ url_for('pay_platform_charge', booking_id=booking_id) }}" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold shadow-sm mb-3" id="pay_btn">
+                    Pay ₹10 & Start Search
+                </a>
+                <a href="{{ url_for('wallet_history') }}" class="text-secondary small text-decoration-none">
+                    <i class="bi bi-plus-circle me-1"></i> Add Money to Wallet
+                </a>
+            </div>
+        </div>
+
+        <a href="/customer/bookings" class="btn btn-outline-secondary mt-3">View My Bookings</a>
     </div>
 </body>
 
